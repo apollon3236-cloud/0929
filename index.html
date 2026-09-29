@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Industry Tech News Dashboard</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1a2333;--mu:#63708a;--bd:#e0e5ee;--ac:#1f5eff}
+@media(prefers-color-scheme:dark){:root{--bg:#0f141c;--card:#182030;--tx:#e8edf6;--mu:#93a0b8;--bd:#2a3550;--ac:#6b98ff}}
+*{box-sizing:border-box}body{margin:0;font-family:"Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{padding:24px 16px 8px;max-width:1100px;margin:auto}
+h1{margin:0;font-size:24px}.sub{color:var(--mu);font-size:13px;margin-top:4px}
+.bar{max-width:1100px;margin:auto;padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:0;background:var(--bg);z-index:5}
+.chip{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:6px 12px;border-radius:99px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+input{margin-left:auto;padding:7px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);min-width:160px}
+main{max-width:1100px;margin:auto;padding:8px 16px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.tag{font-size:11px;font-weight:700;color:var(--ac)}
+.card h2{margin:0;font-size:16px;line-height:1.4}
+.meta{font-size:12px;color:var(--mu)}
+.card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.55}
+.why{background:color-mix(in srgb,var(--ac) 10%,transparent);border-left:3px solid var(--ac);padding:8px 10px;font-size:13px;border-radius:4px}
+.why b{display:block;font-size:11px;color:var(--ac);margin-bottom:2px}
+a{color:var(--ac)}
+.empty{grid-column:1/-1;text-align:center;color:var(--mu);padding:40px}
+footer{max-width:1100px;margin:auto;padding:0 16px 30px;font-size:12px;color:var(--mu)}
+</style>
+</head>
+<body>
+<header><h1>🚗 Industry Tech News Dashboard</h1>
+<div class="sub">자동차·제조 영업 담당자용 · 최신순 정렬 · 기준일 2026-09-29 · <span id="cnt"></span></div></header>
+<div class="bar" id="bar"></div>
+<main id="list"></main>
+<footer>※ 날짜 앞 “~”는 원문에서 일 단위가 확인되지 않아 월/주간 브리프 기준으로 표기한 것입니다. 수치·계획은 각 출처 원문에서 재확인 후 고객 대화에 사용하세요.</footer>
+<script>
+const N=[
+{c:"AI Robotics",t:"Boston Dynamics, 현대차 사바나 캠퍼스에 Atlas 교육센터 개설",co:"Boston Dynamics / Hyundai",d:"2026-09-24",s:"Automotive World AI Brief",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/",b:["미국 사바나 캠퍼스에 Atlas 훈련센터 신설","연 3만 대 로봇 생산 가능한 미국 공장 계획 연계","현장 배치 전 작업 학습·검증 체계를 자체 구축"],w:"휴머노이드가 파일럿에서 양산 도입 단계로 이동. 공장 네트워크·엣지·안전(보안) 인프라 재설계 수요가 동반 발생."},
+{c:"AI Robotics",t:"토요타, 2028년부터 연 최대 1조 엔 투입해 공장 로봇 40만 대 도입",co:"Toyota",d:"2026-09-24",s:"Automotive World AI Brief",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/",b:["2028년부터 연 최대 1조 엔 규모 투자 계획","공장 로봇 약 40만 대 배치 목표","대규모 자동화로 생산 유연성·인력 대체 동시 추구"],w:"로봇 대량 도입은 제어망·통신·관제 SW 투자로 이어짐. 일본 OEM 및 한국 협력사 공급망에 파급 예상."},
+{c:"AI",t:"Mercedes-Benz, Wayve의 매핑 불필요 AI Driver 양산 적용 계약",co:"Mercedes-Benz / Wayve",d:"2026-09-24",s:"Automotive World AI Brief",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/",b:["2년 내 Wayve AI Driver 통합을 위한 양산 계약 체결","HD맵 없이 동작하는 end-to-end AI 방식","OEM이 외부 AI 스택 채택으로 개발 속도 확보"],w:"OEM의 AI 외부 조달 확대 → 학습용 GPU·데이터 파이프라인·클라우드 수요 증가 신호."},
+{c:"AI",t:"현대차 ‘Data Flywheel’: 차량 데이터 수집→AI 학습→재배포 폐쇄 루프",co:"Hyundai Motor Group",d:"2026-09-24",s:"Automotive World AI Brief",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/",b:["플릿 데이터 수집부터 모델 학습·차량 재배포까지 연결","자율주행 개발의 핵심을 산업급 컴퓨팅 규모로 재정의","데이터 인프라 투자가 경쟁력을 좌우"],w:"대용량 데이터 전송·저장·AI 학습 인프라(클라우드/HPC/네트워크) 제안 포인트."},
+{c:"AI",t:"요코하마고무·dotData, 제조 R&D용 AI 에이전트 공동 개발",co:"Yokohama Rubber / dotData",d:"2026-09-24",s:"Automotive World AI Brief",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/",b:["소재·제조 R&D 업무를 지원하는 AI 에이전트 개발","실험·공정 데이터를 자동 분석하는 방식","부품·소재사도 생성형/에이전트 AI 도입 확산"],w:"Tier-2/소재사 대상 AI 데이터 플랫폼 영업 기회. 데이터 정비(MES/PLM 연계)가 선행 과제."},
+{c:"Network",t:"프라이빗 5G 시장 2026년 53.5억 달러 → 2032년 248.4억 달러 전망",co:"Ericsson·Huawei·Nokia·Samsung·Cisco",d:"2026-09-25",s:"GlobeNewswire",u:"https://www.globenewswire.com/news-release/2026/09/25/3368902/28124/en/private-5g-market-forecasts-growth-from-5-35b-2026-to-24-84b-by-2032-profiling-ericsson-huawei-nokia-samsung-cisco-systems.html",b:["연평균 성장률 약 29.1% 전망","자동차 제조가 핵심 수요 산업으로 언급","주요 벤더 간 경쟁 심화"],w:"공장 무선망 교체·신규 구축 시기. 5G/Wi-Fi/유선 통합 제안과 벤더 차별화 포인트 정리 필요."},
+{c:"Cyber Security",t:"Bridgestone Americas 사이버 공격, 미국·캐나다·중남미 다수 공장 가동 중단",co:"Bridgestone Americas",d:"2026-09-05",approx:1,s:"Cybersecurity Dive",u:"https://www.cybersecuritydive.com/news/auto-sector-cyber-threats-business-continuity/802974/",b:["9월 초 공격으로 여러 지역 생산 시설 중단","영향 시설을 네트워크에 재연결하며 복구 진행","자동차 공급망 부품사가 표적이 됨"],w:"OT 보안·망분리·백업/복구 체계 점검 수요가 즉시 발생. 고객사에 인시던트 사례로 활용 가능."},
+{c:"Digital Twin",t:"Ford, 몰입형 VR 기반 디지털 트윈 확대로 신차 양산 전환 효율화",co:"Ford",d:"2026-09-15",approx:1,s:"Automotive Manufacturing Solutions",u:"https://www.automotiveworld.com/intelligence-briefs/automotive-ai-intelligence-brief-september-24-2026/".replace(/.*/,"https://www.automotivemanufacturingsolutions.com/smart-factory/ford-scales-digital-twins-for-smarter-manufacturing-launches/2703190"),b:["VR로 공장 레이아웃을 사전 검증","부서 간 협업 강화 및 고비용 재작업 감소","신차 런칭 시 디지털 트윈 활용 범위 확대"],w:"3D/시뮬레이션·엔지니어링 워크스테이션·GPU 및 고대역 네트워크 수요. 런칭 일정 압박이 도입 명분."},
+{c:"Smart Factory",t:"‘학습하는 자동차 공장’: AI가 생산 데이터를 활용해 스스로 개선하는 디지털 팩토리",co:"Automotive Manufacturing Solutions (업계 분석)",d:"2026-09-01",approx:1,s:"Automotive Manufacturing Solutions",u:"https://www.automotivemanufacturingsolutions.com/factory-transformation/how-the-car-plant-becomes-a-learning-system/2685728",b:["AI·디지털 트윈·실시간 생산 데이터를 결합","시각화를 넘어 의사결정 준비·제어 단계로 이동","전개 초점이 실험에서 실행(스케일업)으로 전환"],w:"PoC 이후 확산 단계 예산이 열림. 데이터 통합(OT-IT)과 엣지 컴퓨팅 아키텍처 제안이 핵심."},
+{c:"Digital Twin",t:"BMW, 30개 이상 생산 거점의 가상 복제(디지털 트윈) 운영",co:"BMW Group",d:"2026-09-01",approx:1,s:"Neural Concept / AMS",u:"https://www.neuralconcept.com/post/digital-twin-in-automotive-industry-transforming-the-future",b:["전 세계 30개 이상 사이트를 가상 복제","레이아웃 변경을 실물 이전에 가상에서 검증","디지털 트윈이 선택이 아닌 표준 엔지니어링 도구화"],w:"글로벌 표준 플랫폼 채택 사례. 한국 OEM/협력사에도 동일 수준 요구가 확산될 가능성."},
+{c:"AI Robotics",t:"BMW 스파턴버그: Figure 03 판금 적재 파일럿 성공률 98.7%",co:"BMW / Figure AI",d:"2026-09-01",approx:1,s:"iFactoryApp 산업 리포트",u:"https://ifactoryapp.com/industries/automotive-manufacturing/humanoid-quadruped-robot-automotive-manufacturing-2026",b:["미국 스파턴버그 공장에서 판금 적재 작업 수행","생산 파일럿 성공률 98.7% 보고","Mercedes·Tesla 등도 휴머노이드 현장 검증 중"],w:"2차 출처 수치이므로 검증 필요. 로봇 확산 시 공장 내 무선 커버리지와 보안 요건이 상승."},
+{c:"Cloud",t:"Geely, Vodafone과 클라우드·프라이빗 네트워크 계약 갱신 (유럽 R&D)",co:"Geely / Vodafone",d:"2026-06-15",approx:1,s:"Telecoms Tech News",u:"https://www.telecomstechnews.com/news/geely-vodafone-private-5g-for-automotive-iot/",b:["Geely 유럽 R&D 조직에 클라우드 서비스 제공","모바일 프라이빗 네트워크 함께 공급","자동차 IoT는 프라이빗 5G+클라우드 구조가 전제"],w:"통신+클라우드 번들 딜 구조의 레퍼런스. R&D 거점 단위로 접근 가능한 제안 모델."},
+{c:"Network",t:"중국 5G 팩토리: 프라이빗 5G 2.3만 개 구축, 1,260개 공장 카탈로그화",co:"중국 MIIT",d:"2026-03-15",approx:1,s:"Private Networks Technology Blog",u:"https://blog.privatenetworks.technology/2026/09/chinas-private-5g-factories-move-from.html",b:["산업용 5G 전용망 2만 3천 개 이상 구축","1,260개 5G 팩토리 카탈로그, 100개 선도 사례 선정","연결에서 산업 플랫폼 단계로 진화"],w:"중국 제조사·현지 공장 보유 고객의 벤치마크. 국내 경쟁력 유지 관점에서 제안 근거로 활용."},
+{c:"Cyber Security",t:"Jaguar Land Rover 사이버 공격으로 약 6주 생산 중단 (2025.9)",co:"Jaguar Land Rover",d:"2025-09-01",approx:1,s:"Wikipedia / Cybersecurity Dive",u:"https://en.wikipedia.org/wiki/Jaguar_Land_Rover_cyberattack",b:["2025년 9월 공격으로 생산이 약 6주간 중단","자동차 업계 역대 최대급 사이버 사건으로 평가","공급망 전체로 연쇄 피해 확산"],w:"OT 보안·비즈니스 연속성 제안 시 ‘중단 비용’ 논거의 대표 사례."},
+{c:"Network",t:"Ericsson 프라이빗 5G, JLR 솔리헐 공장 디지털 제조 전환 지원",co:"Ericsson / JLR",d:"2025-02-01",approx:1,s:"Ericsson",u:"https://www.ericsson.com/en/news/2025/2/ericsson-private-5g-to-support-jlrs-digital-manufacturing-transformation",b:["Range Rover 생산 라인에 프라이빗 5G 적용","비전 시스템·IoT 센서·생산 툴 지원","고속·저지연·보안 요건 충족"],w:"자동차 공장 프라이빗 5G 도입 레퍼런스. 경쟁사 동향 파악용."}
+];
+const CATS=["전체","AI","AI Robotics","Smart Factory","Cloud","Network","Cyber Security","Digital Twin"];
+let cur="전체",q="";
+N.sort((a,b)=>b.d.localeCompare(a.d));
+const bar=document.getElementById("bar");
+CATS.forEach(c=>{const b=document.createElement("button");b.className="chip";b.textContent=c;b.onclick=()=>{cur=c;render()};bar.appendChild(b)});
+const inp=document.createElement("input");inp.placeholder="검색…";inp.oninput=e=>{q=e.target.value.toLowerCase();render()};bar.appendChild(inp);
+const esc=s=>s.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function render(){
+ [...bar.querySelectorAll(".chip")].forEach(b=>b.classList.toggle("on",b.textContent===cur));
+ const L=N.filter(n=>(cur==="전체"||n.c===cur)&&(!q||JSON.stringify(n).toLowerCase().includes(q)));
+ document.getElementById("cnt").textContent=L.length+"건";
+ document.getElementById("list").innerHTML=L.length?L.map(n=>`<article class="card"><div class="tag">${n.c}</div><h2>${esc(n.t)}</h2>
+ <div class="meta">${esc(n.co)} · ${n.approx?"~":""}${n.d} · <a href="${n.u}" target="_blank" rel="noopener">${esc(n.s)}</a></div>
+ <ul>${n.b.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+ <div class="why"><b>영업적으로 중요한 이유</b>${esc(n.w)}</div></article>`).join(""):'<div class="empty">결과 없음</div>';
+}
+render();
+</script>
+</body>
+</html>
